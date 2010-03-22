@@ -1,0 +1,24 @@
+[%- WRAPPER 'release/layout.tt' page='recordings' -%]
+
+    <h2>[% l('Recordings') %]</h2>
+    [% FOR medium IN release.mediums %]
+       <h3>
+           <a href="[% c.uri_for_action('/tracklist/show', [medium.tracklist.id]) %]">
+           [% medium.format_name or l("Medium") | html %] [% medium.position -%]
+           [%- IF medium.name %]: [% medium.name | html %][% END %]
+           </a>
+       </h3>
+
+       [%- FOR track=medium.tracklist.tracks; recording = track.recording %]
+       <p>
+          [% track.position %]. [% link_recording(recording, 'show', track.name) %]<br />
+
+          [%- relationships = recording.relationships -%]
+          [%- INCLUDE "components/relationships.tt" source=recording noheading=1 -%]
+       </p>
+       [%- END -%]
+
+    [% END %]
+
+[%- END -%]
+

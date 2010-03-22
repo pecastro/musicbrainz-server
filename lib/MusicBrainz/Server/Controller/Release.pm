@@ -86,6 +86,24 @@ after 'load' => sub
     }
 };
 
+sub recordings : Chained('load')
+{
+    my ($self, $c) = @_;
+
+    my $release = $c->stash->{release};
+    $c->model('Medium')->load_for_releases($release);
+
+    my @mediums = $release->all_mediums;
+    $c->model('MediumFormat')->load(@mediums);
+
+    my @tracklists = grep { defined } map { $_->tracklist } @mediums;
+    $c->model('Track')->load_for_tracklists(@tracklists);
+
+    my @tracks = map { $_->all_tracks } @tracklists;
+    my @recordings = $c->model('Recording')->load(@tracks);
+    $c->model('Relationship')->load(@recordings);
+}
+
 sub discids : Chained('load')
 {
     my ($self, $c) = @_;

@@ -1,4 +1,6 @@
+[%- UNLESS noheading -%]
 <h2>[% l("Relationships") %]</h2>
+[%- END -%]
 
 [%- IF relationships.size -%]
     <ul>

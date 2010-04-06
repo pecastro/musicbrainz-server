@@ -52,6 +52,12 @@ has 'phrase' => (
     lazy => 1
 );
 
+has 'phrases' => (
+    is => 'ro',
+    builder => '_build_phrases',
+    lazy => 1
+);
+
 sub source
 {
     my ($self) = @_;
@@ -112,22 +118,62 @@ sub _join_attrs
     return '';
 }
 
+sub _build_phrases
+{
+    my ($self) = @_;
+
+    my %attrs;
+    my $iterate;
+
+    foreach my $attr ($self->link->all_attributes)
+    {
+        my $name = lc $attr->root->name;
+        my $value = lc $attr->name;
+
+        $iterate = $name if ($name eq 'vocal' || $name eq 'instrument');
+
+        $attrs{$name} = [] unless exists $attrs{$name};
+        push @{$attrs{$name}}, $value;
+    }
+
+    return [ $self->_build_phrase_with_attributes (\%attrs) ] unless ($iterate);
+
+    my $list = $attrs{$iterate};
+    $attrs{$iterate} = undef;
+
+    my @ret;
+    foreach my $item (@$list)
+    {
+        $attrs{$iterate} = [ $item ];
+        push @ret, $self->_build_phrase_with_attributes (\%attrs);
+    }
+
+    return \@ret;
+}
+
 sub _build_phrase
 {
     my $self = shift;
 
     my @attrs = $self->link->all_attributes;
     my %attrs;
+
     foreach my $attr (@attrs) {
         my $name = lc $attr->root->name;
         my $value = lc $attr->name;
-        if (exists $attrs{$name}) {
-            push @{$attrs{$name}}, $value;
-        }
-        else {
-            $attrs{$name} = [ $value ];
-        }
+
+        $attrs{$name} = [] unless exists $attrs{$name};
+
+        push @{$attrs{$name}}, $value;
     }
+
+    return $self->_build_phrase_with_attributes (\%attrs);
+}
+
+
+sub _build_phrase_with_attributes
+{
+    my ($self, $attrs) = @_;
 
     my $phrase =
         $self->direction == $DIRECTION_FORWARD
@@ -137,13 +183,13 @@ sub _build_phrase
     my $replace_attrs = sub {
         my ($name, $alt) = @_;
         if (!$alt) {
-            return '' unless exists $attrs{$name};
-            return _join_attrs($attrs{$name});
+            return '' unless exists $attrs->{$name};
+            return _join_attrs($attrs->{$name});
         }
         else {
             my ($alt1, $alt2) = split /\|/, $alt;
-            return $alt2 || '' unless exists $attrs{$name};
-            my $attr = _join_attrs($attrs{$name});
+            return $alt2 || '' unless exists $attrs->{$name};
+            my $attr = _join_attrs($attrs->{$name});
             $alt1 =~ s/%/$attr/eg;
             return $alt1;
         }

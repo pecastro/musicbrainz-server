@@ -29,4 +29,17 @@
         [%- END -%]
         </tbody>
     </table>
+
+    <h2>Credits</h2>
+    [%- FOREACH credits -%]
+    <p>
+        [% phrase | html %]
+        <ul>
+        [%- FOREACH credits -%]
+            <li>[% link_entity(target) %] [% tracks %]</li>
+        [%- END -%]
+        </ul>
+    </p>
+    [%- END -%]
+
 [%- END -%]

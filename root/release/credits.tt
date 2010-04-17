@@ -1,0 +1,14 @@
+<h2>Credits</h2>
+[%- IF credits.size -%]
+    <p>
+    [%- FOREACH credits -%]
+        <b>[% phrase | html %]:</b>
+        [% FOREACH credits %]
+            [% link_entity(target) %] [% tracks -%]
+            [%- !loop.last ? ", " : "" -%]
+        [% END %]<br />
+    [%- END -%]
+    </p>
+[%- ELSE -%]
+    <p>[% l('{link} has no credits.', { link => link_entity(entity) }) -%]</p>
+[%- END -%]

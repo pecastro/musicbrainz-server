@@ -30,15 +30,6 @@
         </tbody>
     </table>
 
-    <h2>Credits</h2>
-    <p>
-    [%- FOREACH credits -%]
-        <b>[% phrase | html %]:</b>
-        [% FOREACH credits %]
-            [% link_entity(target) %] [% tracks -%]
-            [%- !loop.last ? ", " : "" -%]
-        [% END %]<br />
-    [%- END -%]
-    </p>
+    [%- INCLUDE 'release/credits.tt' entity=release -%]
 
 [%- END -%]

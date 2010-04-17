@@ -52,9 +52,9 @@ has 'phrase' => (
     lazy => 1
 );
 
-has 'phrases' => (
+has 'short_phrases' => (
     is => 'ro',
-    builder => '_build_phrases',
+    builder => '_build_short_phrases',
     lazy => 1
 );
 
@@ -118,12 +118,38 @@ sub _join_attrs
     return '';
 }
 
-sub _build_phrases
+sub _build_phrase
+{
+    my $self = shift;
+
+    my @attrs = $self->link->all_attributes;
+    my %attrs;
+    foreach my $attr (@attrs) {
+        my $name = lc $attr->root->name;
+        my $value = lc $attr->name;
+        if (exists $attrs{$name}) {
+            push @{$attrs{$name}}, $value;
+        }
+        else {
+            $attrs{$name} = [ $value ];
+        }
+    }
+
+    my $phrase =
+        $self->direction == $DIRECTION_FORWARD
+        ? $self->link->type->link_phrase
+        : $self->link->type->reverse_link_phrase;
+
+    return $self->_build_phrase_with_attributes (\%attrs, $phrase);
+}
+
+sub _build_short_phrases
 {
     my ($self) = @_;
 
     my %attrs;
     my $iterate;
+    my $phrase = $self->link->type->short_link_phrase;
 
     foreach my $attr ($self->link->all_attributes)
     {
@@ -136,7 +162,10 @@ sub _build_phrases
         push @{$attrs{$name}}, $value;
     }
 
-    return [ $self->_build_phrase_with_attributes (\%attrs) ] unless ($iterate);
+    $phrase = '{additional} {guest} {vocal} vocal' if $phrase eq 'vocal';
+    $phrase = '{additional} {guest} {instrument}' if $phrase eq 'instrument';
+
+    return [ $self->_build_phrase_with_attributes (\%attrs, $phrase) ] unless ($iterate);
 
     my $list = $attrs{$iterate};
     $attrs{$iterate} = undef;
@@ -145,40 +174,15 @@ sub _build_phrases
     foreach my $item (@$list)
     {
         $attrs{$iterate} = [ $item ];
-        push @ret, $self->_build_phrase_with_attributes (\%attrs);
+        push @ret, $self->_build_phrase_with_attributes (\%attrs, $phrase);
     }
 
     return \@ret;
 }
 
-sub _build_phrase
-{
-    my $self = shift;
-
-    my @attrs = $self->link->all_attributes;
-    my %attrs;
-
-    foreach my $attr (@attrs) {
-        my $name = lc $attr->root->name;
-        my $value = lc $attr->name;
-
-        $attrs{$name} = [] unless exists $attrs{$name};
-
-        push @{$attrs{$name}}, $value;
-    }
-
-    return $self->_build_phrase_with_attributes (\%attrs);
-}
-
-
 sub _build_phrase_with_attributes
 {
-    my ($self, $attrs) = @_;
-
-    my $phrase =
-        $self->direction == $DIRECTION_FORWARD
-        ? $self->link->type->link_phrase
-        : $self->link->type->reverse_link_phrase;
+    my ($self, $attrs, $phrase) = @_;
 
     my $replace_attrs = sub {
         my ($name, $alt) = @_;

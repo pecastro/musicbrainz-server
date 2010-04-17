@@ -171,7 +171,7 @@ sub _credits
 
                 $id_entity_map{$rel->target->id} = $rel->target;
 
-                foreach my $phrase (@{ $rel->phrases })
+                foreach my $phrase (@{ $rel->short_phrases })
                 {
                     $phrases{$phrase} = {} unless exists $phrases{$phrase};
 

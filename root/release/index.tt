@@ -31,15 +31,14 @@
     </table>
 
     <h2>Credits</h2>
-    [%- FOREACH credits -%]
     <p>
-        [% phrase | html %]
-        <ul>
-        [%- FOREACH credits -%]
-            <li>[% link_entity(target) %] [% tracks %]</li>
-        [%- END -%]
-        </ul>
-    </p>
+    [%- FOREACH credits -%]
+        <b>[% phrase | html %]:</b>
+        [% FOREACH credits %]
+            [% link_entity(target) %] [% tracks -%]
+            [%- !loop.last ? ", " : "" -%]
+        [% END %]<br />
     [%- END -%]
+    </p>
 
 [%- END -%]

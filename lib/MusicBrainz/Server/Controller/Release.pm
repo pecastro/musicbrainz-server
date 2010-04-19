@@ -243,6 +243,7 @@ sub show : Chained('load') PathPart('')
     my @recordings = $c->model('Recording')->load(@tracks);
     $c->model('Recording')->load_meta(@recordings);
     $c->model('Relationship')->load(@recordings);
+    $c->model('Credits')->load($release);
     if ($c->user_exists) {
         $c->model('Recording')->rating->load_user_ratings($c->user->id, @recordings);
     }

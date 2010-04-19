@@ -1,0 +1,16 @@
+<h2>Credits</h2>
+
+[%- IF entity.credits_grouped.size -%]
+    <p>
+    [%- FOREACH group=entity.credits_grouped -%]
+        <b>[% group.0.phrase | html %]:</b>
+        [% FOREACH credit=group %]
+            [% link_entity(credit.artist) -%]
+            [%- " " _ credit.context IF credit.context -%]
+            [%- !loop.last ? ", " : "" -%]
+        [% END %]<br />
+    [%- END -%]
+    </p>
+[%- ELSE -%]
+    <p>[% l('{link} has no credits.', { link => link_entity(entity) }) -%]</p>
+[%- END -%]

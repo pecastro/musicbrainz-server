@@ -5,6 +5,7 @@ use MusicBrainz::Server::Entity::PartialDate;
 use MusicBrainz::Server::Entity::Types;
 
 extends 'MusicBrainz::Server::Entity::CoreEntity';
+with 'MusicBrainz::Server::Entity::Role::Credits';
 with 'MusicBrainz::Server::Entity::Role::Linkable';
 with 'MusicBrainz::Server::Entity::Role::Annotation';
 with 'MusicBrainz::Server::Entity::Role::LastUpdate';
@@ -202,6 +203,94 @@ has 'cover_art' => (
     is        => 'rw',
     predicate => 'has_cover_art',
 );
+
+
+sub _format_range
+{
+    my ($list) = @_;
+
+    my $ret = join (', ', @$list);
+    $ret =~ s/(?<!\d)(\d+)(?:, ((??{$++1})))+(?!\d)/$1-$+/g;
+    return $ret;
+}
+
+sub combine_credit_contexts
+{
+    my ($self, $contexts) = @_;
+
+    return "" unless $contexts;
+
+    my @discs;
+    foreach my $context (@$contexts)
+    {
+        my $disc = $context->{disc_pos};
+        $discs[$disc] = {
+            disc => $context->{disc},
+            total => $context->{track_count},
+            tracks => [],
+        } unless $discs[$disc];
+
+        push @{$discs[$disc]->{tracks}}, $context->{track}
+    }
+
+    my @ret = ();
+    my $one_disc = @discs == 1;
+    foreach my $disc (@discs)
+    {
+        next unless $disc;
+
+        my $str = undef;
+        my @tracks = @{$disc->{tracks}};
+
+        if (@tracks == $disc->{total})
+        {
+            $str = $disc->{disc} unless $one_disc;
+        }
+        else
+        {
+            # FIXME: how do I get access to ngettext in an entity?
+            #
+            #   $str = $c->ngettext("track {tracks}", "tracks {tracks}",
+            #       scalar @tracks, { tracks => _format_range(\@tracks) });
+
+            $str = "track(s) "._format_range(\@tracks);
+
+            $str .= " on " . $disc->{disc} unless $one_disc;
+        }
+        push @ret, $str if $str;
+    }
+
+    return @ret ? "(" . join ("; ", @ret) . ")" : "";
+}
+
+sub child_relationships
+{
+    my ($self) = @_;
+
+    my @mediums = $self->all_mediums;
+    my @relationships;
+
+    my $one_disc = @mediums == 1;
+    foreach my $medium (@mediums)
+    {
+        foreach my $track (@{ $medium->tracklist->tracks })
+        {
+            foreach my $rel (@{ $track->recording->relationships })
+            {
+                my $context = {};
+                $context->{track_count} = $medium->tracklist->track_count;
+                $context->{track} = $track->position;
+                $context->{disc_pos} = $medium->position;
+                $context->{disc} = $medium->format->name." ".$medium->position
+                    unless $one_disc;
+
+                push @relationships, { relationship => $rel, context => $context };
+            }
+        }
+    }
+
+    return \@relationships;
+}
 
 __PACKAGE__->meta->make_immutable;
 no Moose;

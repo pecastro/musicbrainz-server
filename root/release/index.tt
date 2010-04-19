@@ -30,6 +30,6 @@
         </tbody>
     </table>
 
-    [%- INCLUDE 'release/credits.tt' entity=release -%]
+    [%- INCLUDE 'components/credits.tt' entity=release -%]
 
 [%- END -%]

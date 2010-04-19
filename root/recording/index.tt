@@ -47,4 +47,6 @@
         [%- END -%]
     [%- END -%]
 
+    [%- INCLUDE 'components/credits.tt' entity=recording -%]
+
 [%- END -%]

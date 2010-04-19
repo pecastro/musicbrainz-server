@@ -108,6 +108,8 @@ sub show : Chained('load') PathPart('')
     $c->model('Country')->load(@releases);
     $c->model('ReleaseLabel')->load(@releases);
     $c->model('Label')->load(map { $_->all_labels } @releases);
+    $c->model('Relationship')->load($recording);
+    $c->model('Credits')->load($recording);
     $c->stash(
         tracks   => $tracks,
         template => 'recording/index.tt',

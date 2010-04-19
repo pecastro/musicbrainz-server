@@ -1,55 +1,41 @@
-package MusicBrainz::Server::Entity::Recording;
+package MusicBrainz::Server::Entity::Credit;
 
 use Moose;
 use MusicBrainz::Server::Entity::Types;
 
-extends 'MusicBrainz::Server::Entity::CoreEntity';
-with 'MusicBrainz::Server::Entity::Role::Credits';
-with 'MusicBrainz::Server::Entity::Role::Taggable';
-with 'MusicBrainz::Server::Entity::Role::Linkable';
-with 'MusicBrainz::Server::Entity::Role::Annotation';
-with 'MusicBrainz::Server::Entity::Role::LastUpdate';
-with 'MusicBrainz::Server::Entity::Role::Rating';
-
-has 'artist_credit_id' => (
+has 'context' => (
     is => 'rw',
-    isa => 'Int'
+    isa => 'HashRef[Str]',
+    lazy => 1,
+    default => sub { {} },
 );
 
-has 'artist_credit' => (
+has 'artist' => (
     is => 'rw',
-    isa => 'ArtistCredit'
+    isa => 'Artist',
 );
 
-has 'track_id' => (
+has 'phrase' => (
     is => 'rw',
-    isa => 'Int'
+    isa => 'Str',
 );
 
-has 'track' => (
+has 'order' => (
     is => 'rw',
-    isa => 'Track'
+    isa => 'Int',
 );
-
-has 'length' => (
-    is => 'rw',
-    isa => 'Int'
-);
-
-has 'comment' => (
-    is => 'rw',
-    isa => 'Str'
-);
-
-sub combine_credit_contexts {return undef; }
 
 __PACKAGE__->meta->make_immutable;
 no Moose;
 1;
 
+=head1 NAME
+
+MusicBrainz::Server::Entity::Credit
+
 =head1 COPYRIGHT
 
-Copyright (C) 2009 Lukas Lalinsky
+Copyright (C) 2010 MetaBrainz Foundation
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

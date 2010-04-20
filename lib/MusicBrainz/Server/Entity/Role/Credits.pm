@@ -12,6 +12,13 @@ has 'credits' => (
     traits => [ 'Array' ],
 );
 
+has 'combine_credit_contexts' => (
+    is => 'rw',
+    isa => 'CodeRef',
+    default => sub { sub { return undef; } },
+    lazy => 1,
+);
+
 sub add_credit
 {
     my ($self, $phrase, $artist, $order, $context) = @_;
@@ -68,7 +75,7 @@ sub credits_grouped
             my @artists = values %artists;
             foreach (@artists)
             {
-                $_->{context} = $self->combine_credit_contexts($_->{context});
+                $_->{context} = $self->combine_credit_contexts->($_->{context});
             }
 
             push @credits, \@artists;

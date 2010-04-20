@@ -41,8 +41,6 @@ has 'comment' => (
     isa => 'Str'
 );
 
-sub combine_credit_contexts {return undef; }
-
 __PACKAGE__->meta->make_immutable;
 no Moose;
 1;

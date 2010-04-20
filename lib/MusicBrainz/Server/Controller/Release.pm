@@ -111,103 +111,6 @@ sub relations : Chained('load')
     $c->stash->{relations} = $c->model('Relation')->load_relations($self->entity);
 }
 
-sub _format_range
-{
-    my ($list) = @_;
-
-    my $ret = join (', ', @$list);
-    $ret =~ s/(?<!\d)(\d+)(?:, ((??{$++1})))+(?!\d)/$1-$+/g;
-    return $ret;
-}
-
-sub _format_tracks
-{
-    my ($self, $c, $mediums, $credits) = @_;
-
-    my @ret = ();
-    foreach my $medium (@$mediums)
-    {
-        next unless defined $credits->[$medium->position];
-
-        my $tracks = $credits->[$medium->position];
-        my $str = undef;
-
-        if (@$tracks == $medium->tracklist->track_count)
-        {
-            $str = $medium->format_name . " " . $medium->position
-                unless @$mediums == 1;
-        }
-        else
-        {
-            $str = $c->ngettext("track {tracks}", "tracks {tracks}",
-                scalar @$tracks, { tracks => _format_range($tracks) });
-
-            $str .= " on " . $medium->format_name . " " . $medium->position
-                unless @$mediums == 1;
-        }
-
-        push @ret, $str if $str;
-    }
-
-    return @ret ? "(" . join ("; ", @ret) . ")" : "";
-}
-
-sub _credits
-{
-    my ($self, $c, $mediums) = @_;
-
-    my %phrases;
-    my %id_entity_map;
-
-    my $one_disc = @$mediums == 1;
-    foreach my $medium (@$mediums)
-    {
-        my $disc = $medium->position;
-        foreach my $track (@{ $medium->tracklist->tracks })
-        {
-            foreach my $rel (@{ $track->recording->relationships })
-            {
-                next unless $rel->target->isa('MusicBrainz::Server::Entity::Artist');
-
-                $id_entity_map{$rel->target->id} = $rel->target;
-
-                foreach my $phrase (@{ $rel->short_phrases })
-                {
-                    $phrases{$phrase} = {} unless exists $phrases{$phrase};
-
-                    my $credits = $phrases{$phrase};
-                    $credits->{$rel->target->id} = [] unless exists $credits->{$rel->target->id};
-                    my $tracks = $credits->{$rel->target->id};
-                    $tracks->[$disc] = [] unless exists $tracks->[$disc];
-
-                    push @{ $tracks->[$disc] }, $track->position;
-                }
-            }
-        }
-    }
-
-    my $ret = [];
-    while( my ($phrase, $artists) = each %phrases )
-    {
-        my $credits = [];
-
-        while( my ($artist_id, $tracks) = each %$artists )
-        {
-            push @$credits, {
-                target => $id_entity_map{$artist_id},
-                tracks => $self->_format_tracks($c, $mediums, $tracks)
-            };
-        }
-
-        push @$ret, {
-            phrase => $phrase,
-            credits => $credits,
-        }
-    }
-
-    return $ret;
-}
-
 =head2 show
 
 Display a release to the user.
@@ -243,7 +146,7 @@ sub show : Chained('load') PathPart('')
     my @recordings = $c->model('Recording')->load(@tracks);
     $c->model('Recording')->load_meta(@recordings);
     $c->model('Relationship')->load(@recordings);
-    $c->model('Credits')->load($release);
+    $c->model('Credits')->load($c, $release);
     if ($c->user_exists) {
         $c->model('Recording')->rating->load_user_ratings($c->user->id, @recordings);
     }
@@ -251,7 +154,6 @@ sub show : Chained('load') PathPart('')
 
     $c->stash(
         template     => 'release/index.tt',
-        credits      => $self->_credits ($c, \@mediums),
         show_artists => $release->has_multiple_artists,
     );
 }

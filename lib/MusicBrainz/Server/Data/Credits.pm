@@ -1,13 +1,12 @@
 package MusicBrainz::Server::Data::Credits;
 
 use Moose;
-use MusicBrainz::Server::Entity::Credits;
 
 extends 'MusicBrainz::Server::Data::Entity';
 
 sub load
 {
-    my ($self, @entities) = @_;
+    my ($self, $c, @entities) = @_;
 
     foreach my $entity (@entities)
     {
@@ -21,7 +20,12 @@ sub load
             }
         }
 
-        next unless $entity->meta->has_method ('child_relationships');
+        next unless $entity->meta->has_method('child_relationships');
+
+        if ($entity->meta->has_method('make_combine_credit_contexts'))
+        {
+            $entity->make_combine_credit_contexts($c);
+        }
 
         foreach (@{ $entity->child_relationships })
         {
@@ -31,7 +35,7 @@ sub load
 
             foreach (@{ $rel->short_phrases })
             {
-                $entity->add_credit($_, $rel->target, 
+                $entity->add_credit($_, $rel->target,
                     $rel->link->type->child_order, $context);
             }
         }

@@ -214,53 +214,56 @@ sub _format_range
     return $ret;
 }
 
-sub combine_credit_contexts
+sub make_combine_credit_contexts
 {
-    my ($self, $contexts) = @_;
+    my ($self, $c) = @_;
 
-    return "" unless $contexts;
+    $self->combine_credit_contexts(sub {
+        my ($contexts) = @_;
 
-    my @discs;
-    foreach my $context (@$contexts)
-    {
-        my $disc = $context->{disc_pos};
-        $discs[$disc] = {
-            disc => $context->{disc},
-            total => $context->{track_count},
-            tracks => [],
-        } unless $discs[$disc];
+        return "" unless $contexts;
 
-        push @{$discs[$disc]->{tracks}}, $context->{track}
-    }
-
-    my @ret = ();
-    my $one_disc = @discs == 1;
-    foreach my $disc (@discs)
-    {
-        next unless $disc;
-
-        my $str = undef;
-        my @tracks = @{$disc->{tracks}};
-
-        if (@tracks == $disc->{total})
+        my @discs;
+        foreach my $context (@$contexts)
         {
-            $str = $disc->{disc} unless $one_disc;
+            my $disc = $context->{disc_pos};
+            $discs[$disc] = {
+                disc => $context->{disc},
+                total => $context->{track_count},
+                tracks => [],
+            } unless $discs[$disc];
+
+            push @{$discs[$disc]->{tracks}}, $context->{track}
         }
-        else
+
+        my @ret = ();
+        foreach my $disc (@discs)
         {
-            # FIXME: how do I get access to ngettext in an entity?
-            #
-            #   $str = $c->ngettext("track {tracks}", "tracks {tracks}",
-            #       scalar @tracks, { tracks => _format_range(\@tracks) });
+            next unless $disc;
 
-            $str = "track(s) "._format_range(\@tracks);
+            my $str = undef;
+            my @tracks = @{$disc->{tracks}};
 
-            $str .= " on " . $disc->{disc} unless $one_disc;
+            if (@tracks == $disc->{total})
+            {
+                $str = $disc->{disc} if ($disc->{disc});
+            }
+            elsif ($disc->{disc})
+            {
+                $str = $c->ngettext("track {tracks} on {disc}",
+                    "tracks {tracks} on {disc}", scalar @tracks,
+                    { tracks => _format_range(\@tracks), disc => $disc->{disc} });
+            }
+            else
+            {
+                $str = $c->ngettext("track {tracks}", "tracks {tracks}",
+                    scalar @tracks, { tracks => _format_range(\@tracks) });
+            }
+            push @ret, $str if $str;
         }
-        push @ret, $str if $str;
-    }
 
-    return @ret ? "(" . join ("; ", @ret) . ")" : "";
+        return @ret ? "(" . join ("; ", @ret) . ")" : "";
+    });
 }
 
 sub child_relationships

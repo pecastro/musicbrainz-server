@@ -7,6 +7,7 @@ use MusicBrainz::Server::WebService::XMLSerializer;
 use MusicBrainz::Server::WebService::XMLSearch qw( xml_search );
 use MusicBrainz::Server::WebService::Validator;
 use MusicBrainz::Server::Validation qw( is_valid_isrc is_valid_discid );
+use DateTime::Format::Mail;
 use Readonly;
 use Data::OptList;
 
@@ -25,6 +26,9 @@ my $ws_defs = Data::OptList::mkopt([
                          method   => 'GET',
                          inc      => [ qw(aliases discs labels _relations _rel_status _rg_type tags) ],
      },
+     artist => {
+                         method   => 'HEAD',
+     },
      "release-group" => {
                          method   => 'GET',
                          required => [ qw(query) ],
@@ -33,6 +37,9 @@ my $ws_defs = Data::OptList::mkopt([
      "release-group" => {
                          method   => 'GET',
                          inc      => [ qw(artists releases _relations tags) ],
+     },
+     "release-group" => {
+                         method   => 'HEAD',
      },
      release => {
                          method   => 'GET',
@@ -43,6 +50,9 @@ my $ws_defs = Data::OptList::mkopt([
                          method   => 'GET',
                          inc      => [ qw(artists discs isrcs labels recordings releasegroups _relations)]
      },
+     release => {
+                         method   => 'HEAD',
+     },
      recording => {
                          method   => 'GET',
                          required => [ qw(query) ],
@@ -51,6 +61,9 @@ my $ws_defs = Data::OptList::mkopt([
      recording => {
                          method   => 'GET',
                          inc      => [ qw(artists isrcs puids releases _relations tags) ]
+     },
+     recording => {
+                         method   => 'HEAD',
      },
      label => {
                          method   => 'GET',
@@ -61,6 +74,9 @@ my $ws_defs = Data::OptList::mkopt([
                          method   => 'GET',
                          inc      => [ qw(aliases  _relations tags) ],
      },
+     label => {
+                         method   => 'HEAD',
+     },
      work => {
                          method   => 'GET',
                          required => [ qw(query) ],
@@ -69,6 +85,9 @@ my $ws_defs = Data::OptList::mkopt([
      work => {
                          method   => 'GET',
                          inc      => [ qw(artists  _relations tags) ]
+     },
+     work => {
+                         method   => 'HEAD',
      },
      puid => {
                          method   => 'GET',
@@ -122,6 +141,17 @@ sub root : Chained('/') PathPart("ws/2") CaptureArgs(0)
     $self->validate($c, \%serializers) or $c->detach('bad_req');
 }
 
+sub _last_modified
+{
+    my ($self, $c, $entity) = @_;
+
+    if ($entity->last_update_date)
+    {
+        my $modified = DateTime::Format::Mail->format_datetime($entity->last_update_date);
+        $c->response->headers->header('Last-Modified', $modified);
+    }
+}
+
 sub artist : Chained('root') PathPart('artist') Args(1)
 {
     my ($self, $c, $gid) = @_;
@@ -136,6 +166,11 @@ sub artist : Chained('root') PathPart('artist') Args(1)
     unless ($artist) {
         $c->detach('not_found');
     }
+
+    $c->model('Artist')->load_meta($artist);
+    $self->_last_modified($c, $artist);
+
+    return if ($c->request->method eq 'HEAD');
 
     $c->model('ArtistType')->load($artist);
     $c->model('Gender')->load($artist);
@@ -234,6 +269,12 @@ sub release_group : Chained('root') PathPart('release-group') Args(1)
     unless ($rg) {
         $c->detach('not_found');
     }
+
+    $c->model('ReleaseGroup')->load_meta($rg);
+    $self->_last_modified($c, $rg);
+
+    return if ($c->request->method eq 'HEAD');
+
     $c->model('ReleaseGroupType')->load($rg);
     $c->model('ArtistCredit')->load($rg)
         if ($c->stash->{inc}->artists);
@@ -293,13 +334,18 @@ sub release: Chained('root') PathPart('release') Args(1)
     unless ($release) {
         $c->detach('not_found');
     }
+
+    $c->model('Release')->load_meta($release);
+    $self->_last_modified($c, $release);
+
+    return if ($c->request->method eq 'HEAD');
+
     $c->model('ReleaseStatus')->load($release);
     $c->model('Language')->load($release);
     $c->model('Script')->load($release);
     $c->model('Country')->load($release);
     $c->model('ArtistCredit')->load($release)
         if ($c->stash->{inc}->artists);
-    $c->model('Release')->load_meta($release);
 
     if ($c->stash->{inc}->releasegroups)
     {
@@ -382,6 +428,12 @@ sub recording: Chained('root') PathPart('recording') Args(1)
     unless ($recording) {
         $c->detach('not_found');
     }
+
+    $c->model('Recording')->load_meta($recording);
+    $self->_last_modified($c, $recording);
+
+    return if ($c->request->method eq 'HEAD');
+
     $c->model('ArtistCredit')->load($recording)
         if ($c->stash->{inc}->artists);
 
@@ -453,6 +505,11 @@ sub label : Chained('root') PathPart('label') Args(1)
         $c->detach('not_found');
     }
 
+    $c->model('Label')->load_meta($label);
+    $self->_last_modified($c, $label);
+
+    return if ($c->request->method eq 'HEAD');
+
     my $opts = {};
     $opts->{aliases} = $c->model('Label')->alias->find_by_entity_id($label->id)
         if ($c->stash->{inc}->aliases);
@@ -508,6 +565,11 @@ sub work : Chained('root') PathPart('work') Args(1)
     unless ($work) {
         $c->detach('not_found');
     }
+
+    $c->model('Work')->load_meta($work);
+    $self->_last_modified($c, $work);
+
+    return if ($c->request->method eq 'HEAD');
 
     my $opts = {};
     if ($c->stash->{inc}->tags)

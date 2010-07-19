@@ -10,6 +10,8 @@ sub load
 
     foreach my $entity (@entities)
     {
+        next unless $entity->does('MusicBrainz::Server::Entity::Role::Linkable');
+
         foreach my $rel (@{ $entity->relationships })
         {
             next unless $rel->target->isa('MusicBrainz::Server::Entity::Artist');
@@ -19,8 +21,6 @@ sub load
                 $entity->add_credit($_, $rel->target, $rel->link->type->child_order);
             }
         }
-
-        next unless $entity->meta->has_method('child_relationships');
 
         if ($entity->meta->has_method('make_combine_credit_contexts'))
         {
@@ -35,8 +35,12 @@ sub load
 
             foreach (@{ $rel->short_phrases })
             {
-                $entity->add_credit($_, $rel->target,
-                    $rel->link->type->child_order, $context);
+                $entity->add_credit(
+                    phrase => $_,
+                    artist => $rel->target,
+                    order => $rel->link->type->child_order,
+                    context => $context,
+                );
             }
         }
     }

@@ -16,6 +16,11 @@ has 'relationships' => (
     }
 );
 
+sub child_relationships
+{
+    return [];
+}
+
 1;
 
 =head1 NAME

@@ -21,16 +21,7 @@ has 'combine_credit_contexts' => (
 
 sub add_credit
 {
-    my ($self, $phrase, $artist, $order, $context) = @_;
-
-    my $cr = MusicBrainz::Server::Entity::Credit->new ();
-
-    $cr->phrase($phrase);
-    $cr->artist($artist);
-    $cr->order($order);
-    $cr->context($context) if $context;
-
-    push @{$self->credits}, $cr;
+    push @{shift->credits}, MusicBrainz::Server::Entity::Credit->new (@_);
 }
 
 sub credits_grouped

@@ -18,7 +18,8 @@ has 'artist_credit_id' => (
 
 has 'artist_credit' => (
     is => 'rw',
-    isa => 'ArtistCredit'
+    isa => 'ArtistCredit',
+    clearer => 'clear_artist_credit',
 );
 
 has 'track_id' => (
@@ -39,6 +40,26 @@ has 'length' => (
 has 'comment' => (
     is => 'rw',
     isa => 'Str'
+);
+
+has 'isrcs' => (
+    isa     => 'ArrayRef',
+    is      => 'ro',
+    traits  => [ 'Array' ],
+    default => sub { [] },
+    handles => {
+        add_isrc => 'push',
+    }
+);
+
+has 'puids' => (
+    isa     => 'ArrayRef',
+    is      => 'ro',
+    traits  => [ 'Array' ],
+    default => sub { [] },
+    handles => {
+        add_puid => 'push',
+    }
 );
 
 __PACKAGE__->meta->make_immutable;

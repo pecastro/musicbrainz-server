@@ -81,9 +81,6 @@ sub _fix_html_markup
     $content =~ s/(\w+)\@(\w+)/$1&#x0040;$2/g;
     $content =~ s/mailto:/mailto&#x3a;/g;
 
-    # expand placeholders which point to the current webserver [@WEB_SERVER@/someurl title]
-    $content =~ s/\[\@WEB_SERVER\@([^ ]*) ([^\]]*)\]/<img src="\/images\/edit.gif" alt="" \/><a href="$1">$2<\/a>/g;
-
     return $content;
 }
 
@@ -159,21 +156,6 @@ sub get_page
     $cache->set($cache_key, $page, $timeout);
 
     return $page;
-}
-
-sub get_current_page_version
-{
-    my ($self, $id) = @_;
-
-    my $doc_url = sprintf "http://%s/%s?action=history", &DBDefs::WIKITRANS_SERVER, $id;
-    my $ua = LWP::UserAgent->new(max_redirect => 0);
-    $ua->env_proxy;
-    my $response = $ua->get($doc_url);
-
-    if ($response->content =~ /amp;diff=(\d+)\&amp;oldid=/) {
-        return $1;
-    }
-    return undef;
 }
 
 __PACKAGE__->meta->make_immutable;

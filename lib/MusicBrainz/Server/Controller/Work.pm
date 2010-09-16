@@ -36,24 +36,31 @@ after 'load' => sub
     }
 };
 
-sub show : PathPart('') Chained('load')
+sub show : PathPart('') Chained('load') 
 {
     my ($self, $c) = @_;
 
     my $work = $c->stash->{work};
     $c->model('WorkType')->load($work);
     $c->model('ArtistCredit')->load($work);
+
+    # need to call relationships for overview page
+    $self->relationships($c);
+
 
     $c->stash->{template} = 'work/index.tt';
 }
 
-after 'relationships' => sub
-{
-    my ($self, $c) = @_;
-    my $work = $c->stash->{work};
-    $c->model('WorkType')->load($work);
-    $c->model('ArtistCredit')->load($work);
-};
+for my $action (qw( relationships aliases )) {
+    after $action => sub {
+        my ($self, $c) = @_;
+        my $work = $c->stash->{work};
+        $c->model('WorkType')->load($work);
+        $c->model('ArtistCredit')->load($work);
+    };
+}
+
+
 
 with 'MusicBrainz::Server::Controller::Role::Edit' => {
     form           => 'Work',

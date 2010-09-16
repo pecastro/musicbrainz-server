@@ -32,7 +32,7 @@
 
 <div class="search-toggle c">
     <p>
-        <strong>[%- ln('Found {n} edit', 'Found {n} edits' , pager.total_entries, { n => pager.total_entries}) -%]</strong>
+        <strong>[%- ln('Found {n} edit', 'Found {n} edits' , pager.total_entries, { n => add_commas(pager.total_entries) }) -%]</strong>
         [% IF search %]
             (<a href="[% c.uri_for_action('/edit/search') %]">[% l('search again') %]</a>)
         [% END %]
@@ -51,7 +51,11 @@
                     </div>
 
                     <div class="edit-details">
-                        [%-INCLUDE "edit/details/${edit.edit_template}.tt" %]
+                        [% IF edit.data.defined %]
+                           [%-INCLUDE "edit/details/${edit.edit_template}.tt" %]
+                        [% ELSE %]
+                           <p>[% l('An error occured while loading this edit') %]</p>
+                        [% END %]
                     </div>
 
                     [% IF edit.edit_notes.size %]

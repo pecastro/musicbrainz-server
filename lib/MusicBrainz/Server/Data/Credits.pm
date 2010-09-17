@@ -18,7 +18,11 @@ sub load
 
             foreach (@{ $rel->short_phrases })
             {
-                $entity->add_credit($_, $rel->target, $rel->link->type->child_order);
+                $entity->add_credit(
+                    phrase => $_,
+                    artist => $rel->target,
+                    order => $rel->link->type->child_order,
+                );
             }
         }
 

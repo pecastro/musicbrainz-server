@@ -283,8 +283,12 @@ sub child_relationships
                 $context->{track_count} = $medium->tracklist->track_count;
                 $context->{track} = $track->position;
                 $context->{disc_pos} = $medium->position;
-                $context->{disc} = $medium->format->name." ".$medium->position
-                    unless $one_disc;
+
+                unless ($one_disc) {
+                    $context->{disc} = defined $medium->format ?
+                        $medium->format->name." ".$medium->position :
+                        "Medium " . $medium->position;
+                }
 
                 push @relationships, { relationship => $rel, context => $context };
             }

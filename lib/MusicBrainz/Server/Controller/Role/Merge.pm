@@ -59,6 +59,8 @@ role {
                     name => $_->name
                 }, @$old ]
             );
+
+            undef $c->session->{merger};
         }
     };
 };

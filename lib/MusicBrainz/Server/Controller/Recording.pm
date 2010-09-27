@@ -152,20 +152,13 @@ before 'edit' => sub {
     my $recording = $c->stash->{recording};
 };
 
-after 'merge' => sub {
+before 'merge' => sub {
     my ($self, $c) = @_;
     $c->model('ArtistCredit')->load(
-        $c->stash->{recording}, $c->stash->{old}, $c->stash->{new}
+        $c->stash->{recording},
+        $c->stash->{to_merge},
     );
-};
-
-around '_merge_search' => sub {
-    my $orig = shift;
-    my ($self, $c, $query) = @_;
-
-    my $results = $self->$orig($c, $query);
-    $c->model('ArtistCredit')->load(map { $_->entity } @$results);
-    return $results;
+    $c->model('ISRC')->load_for_recordings(@{ $c->stash->{to_merge} });
 };
 
 sub add_isrc : Chained('load') PathPart('add-isrc') RequireAuth

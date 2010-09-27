@@ -49,7 +49,10 @@ role {
 
     method 'merge' => sub {
         my ($self, $c) = @_;
-        $c->stash( template => $c->namespace . '/merge.tt' );
+        $c->stash(
+            template => $c->namespace . '/merge.tt',
+            hide_merge => 1
+        );
 
         my $merger = $c->session->{merger}
             or die 'No merge in process';

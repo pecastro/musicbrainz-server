@@ -1,14 +1,18 @@
 package MusicBrainz::Server::Controller::Root;
-
-use strict;
-use warnings;
-
-use base 'Catalyst::Controller';
+use Moose;
+BEGIN { extends 'Catalyst::Controller' }
 
 # Import MusicBrainz libraries
 use DBDefs;
 use ModDefs;
 use MusicBrainz::Server::Replication ':replication_type';
+use MusicBrainz::Server::Form::Search::Search;
+
+has 'search_form' => (
+    is => 'ro',
+    lazy => 1,
+    default => sub { MusicBrainz::Server::Form::Search::Search->new }
+);
 
 #
 # Sets the actions in this controller to be registered with no prefix
@@ -145,7 +149,8 @@ sub begin : Private
     }
 
     # Setup the searchs on the sidebar
-    $c->form( sidebar_search => 'Search::Search' );
+    my $form = $self->search_form;
+    $c->stash( sidebar_search => $form );
 
     # Returns a special 404 for areas of the site that shouldn't exist on a slave (e.g. /user pages)
     if (exists $c->action->attributes->{HiddenOnSlaves}) {

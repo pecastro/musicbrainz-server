@@ -1,0 +1,7 @@
+<p>
+    <strong>[% l('Rating:') %]</strong>
+    [% rating_stars(entity) %]
+    [%- IF entity.rating_count -%]
+    <br />[% link_entity(entity, "ratings", l("Show user ratings")) %]
+    [%- END -%]
+</p>

@@ -1,0 +1,16 @@
+<table class="details edit-track-length">
+  [% IF edit.display_data.recording %]
+  <tr>
+    <th>[% l('Recording:') %]</th>
+    <td colspan="2">
+      [% descriptive_link(edit.display_data.recording) %]
+    </td>
+  </tr>
+  [% END %]
+
+  <tr>
+    <th>[% l('Track Length:') %]</th>
+    <td class="old">[% edit.display_data.length.old | format_length %]</td>
+    <td class="new">[% edit.display_data.length.new | format_length %]</td>
+  </tr>
+</table>

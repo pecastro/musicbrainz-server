@@ -1,0 +1,22 @@
+<table class="details move-disc-id">
+  <tr>
+    <th>[% l('Disc ID:') %]</th>
+    <td>[% link_cdtoc(edit.display_data.medium_cdtoc.cdtoc) %]</td>
+  </tr>
+
+  <tr>
+    <th>[% l('From:') %]</th>
+    <td>
+      [% release = edit.display_data.old_release %]
+      [% descriptive_link(release) %]</li>
+    </td>
+  </tr>
+
+  <tr>
+    <th>[% l('To:') %]</th>
+    <td>
+      [% release = edit.display_data.new_release %]
+      [% descriptive_link(release) %]</li>
+    </td>
+  </tr>
+</table>

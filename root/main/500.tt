@@ -1,0 +1,22 @@
+[% WRAPPER "layout.tt" title=l('Internal Server Error') full_width=1 %]
+    <div id="content">
+        <h1>[%- l('Internal Server Error') -%]</h1>
+
+        <p><strong>[%- l('Oops, something went wrong!') -%]</strong></p>
+
+        [% IF message %]
+            <p>
+                <strong>[%- l('Error message: ') -%]</strong>
+                <code>[%- message | html -%]</code>
+            </p>
+        [% END %]
+
+        <p>
+            [%- l('Waiting a few minutes and repeating your request may solve the problem.') %]
+        </p>
+
+        <p class="small">
+            [% l('Problem not going away? Please {con|contact us}.', { con => doc_link('Contact_Us') }) -%]
+        </p>
+    </div>
+[%- END -%]

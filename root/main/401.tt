@@ -1,0 +1,19 @@
+[% WRAPPER "layout.tt" title=l('Unauthorized Request') full_width=1 %]
+    <div id="content">
+        <h1>[%- l('Unauthorized Request') -%]</h1>
+
+        <p><strong>[%- l('Sorry, you are not authorized to view this page.') -%]</strong></p>
+
+        [% IF c.user && !c.user.email_confirmation_date %]
+            <p>
+                [%- l('You must first verify your email address before being able to edit
+                       or add anything to the database.') -%]
+            </p>
+        [% END %]
+
+        <p class="small">
+            [%- l('Think this was a mistake? Please {con|contact us}.',
+                 { con => doc_link('Contact_Us') }) -%]
+        </p>
+    </div>
+[% END %]

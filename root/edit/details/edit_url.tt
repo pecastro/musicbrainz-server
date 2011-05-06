@@ -1,0 +1,26 @@
+[% MACRO show_url(url) BLOCK %]
+    <a href="[% url | url %]">[% url | html %]</a>
+[% END %]
+
+<table class="details edit-url">
+  <tr>
+    <th>[% l('URL:') %]</th>
+    <td>[% link_entity(edit.display_data.url) %]</td>
+  </tr>
+
+  [% IF edit.display_data.uri %]
+  <tr>
+    <th>[% l('URL:') %]</th>
+    <td class="old">[% show_url(edit.display_data.uri.old) %]</td>
+    <td class="new">[% show_url(edit.display_data.uri.new) %]</td>
+  </tr>
+  [% END %]
+
+  [% IF edit.display_data.description %]
+  <tr>
+    <th>[% l('Description:') %]</th>
+    <td class="old">[% edit.display_data.description.old | html %]</td>
+    <td class="new">[% edit.display_data.description.new | html %]</td>
+  </tr>
+  [% END %]
+</table>

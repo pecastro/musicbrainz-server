@@ -1,0 +1,16 @@
+<table class="details edit-track-number">
+  [% IF edit.display_data.recording %]
+  <tr>
+    <th>[% l('Recording:') %]</th>
+    <td colspan="2">
+      [% descriptive_link(edit.display_data.recording) %]
+    </td>
+  </tr>
+  [% END %]
+
+  <tr>
+    <th>[% l('Track Number:') %]</th>
+    <td class="old">[% edit.display_data.position.old | html %]</td>
+    <td class="new">[% edit.display_data.position.new | html %]</td>
+  </tr>
+</table>

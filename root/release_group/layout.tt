@@ -1,0 +1,63 @@
+[% main_title = l('Release group “{name}” by {artist}', {
+    artist => artist_credit(rg.artist_credit, plain => 1),
+    name => rg.name
+}) %]
+[%- WRAPPER "layout.tt" usesRDFa=1 title=title ? main_title _ " - ${title}" : main_title -%]
+
+    [% WRAPPER 'layout/sidebar.tt' %]
+        [% WRAPPER 'layout/sidebar/properties.tt' %]
+            [% INCLUDE 'layout/sidebar/property.tt' label=l('Artist:')
+               content=artist_credit(rg.artist_credit) %]
+            [% INCLUDE 'layout/sidebar/property.tt' label=l('Type:')
+               content=html_escape(rg.type_name)
+                   IF rg.type -%]
+        [%- END -%]
+
+        [%- INCLUDE "layout/sidebar/sidebar-rating.tt" entity=rg -%]
+        [%- INCLUDE "layout/sidebar/sidebar-tags.tt" entity=rg tags=top_tags
+            more=more_tags tag_this_text=l('Tag release group')
+            async = c.uri_for_action('/release_group/tag_async', [ rg.gid ])
+            -%]
+
+        <ul class="links">
+            [% IF c.user_exists %]
+                <li>
+                  <a href="[% c.uri_for(c.controller.action_for('edit_annotation'), [ rg.gid ]) %]">
+                    [% rg.latest_annotation.text ? l('Edit annotation') : l('Add an annotation') %]
+                  </a>
+                </li>
+                <li>
+                  <a href="[% c.uri_for_action('/release_group/merge_queue', { 'add-to-merge' => rg.id }) %]">
+                    [% l('Merge this release group with another') %]
+                  </a>
+                </li>
+                <li>[% link_entity(rg, 'edits', l('View editing history')) %]</li>
+                [% IF rg.edits_pending %]
+                    <li>[% link_entity(rg, 'open_edits', l('Open edits')) %]</li>
+                [% END %]
+                [% IF can_delete %]
+                    <li>[% link_entity(rg, 'delete', l('Remove this release group')) %]</li>
+                [% END %]
+                <li>[% use_in_relationship(rg) %]</li>
+                <li>[% relate_to_ellipsis(rg) %]</li>
+                <li>[% relate_to_url(rg) %]</li>
+                <li>
+                  <a href="[% c.uri_for_action('/release_editor/add', { 'release-group' = rg.gid }) %]">
+                    [% l('Add a new release') %]
+                  </a>
+                </li>
+            [% ELSE %]
+               <li>[% request_login(l('Please log in to edit this release group')) %]</li>
+            [% END %]
+        </ul>
+
+        [%- INCLUDE "layout/sidebar/sidebar-lastupdate.tt" entity=rg -%]
+
+        [%- INCLUDE "layout/sidebar/sidebar-favicons.tt" source=rg -%]
+    [% END %]
+
+    <div id="content">
+        [%- INCLUDE "release_group/header.tt" -%]
+        [%- content -%]
+    </div>
+[%- END -%]

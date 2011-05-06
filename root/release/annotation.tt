@@ -1,0 +1,1 @@
+[%- INCLUDE 'annotation/common.tt' annotation = release.latest_annotation -%]

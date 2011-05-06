@@ -1,0 +1,78 @@
+[%- WRAPPER "layout.tt" usesRDFa=1 title=title ? label.name _ " - ${title}" : label.name -%]
+
+    [% WRAPPER 'layout/sidebar.tt' %]
+        [% WRAPPER 'layout/sidebar/properties.tt' %]
+            [% INCLUDE 'layout/sidebar/property.tt' label=l('Type:')
+               content=html_escape(label.type_name)
+                   IF label.type -%]
+            [%- UNLESS label.begin_date.is_empty AND label.end_date.is_empty -%]
+                [% WRAPPER 'layout/sidebar/property.tt' label=l('Active:') %]
+                    [% label.begin_date.format or l("present") %] &ndash;
+                    [% label.end_date.format or l("present") %]
+                    [% IF label.has_age %]
+                       ([% display_age (label.age) %])
+                    [% END %]
+                [% END %]
+            [%- END -%]
+            [% INCLUDE 'layout/sidebar/property.tt' label=l('IPI code:')
+               content=html_escape(label.ipi_code)
+                   IF label.ipi_code -%]
+            [% INCLUDE 'layout/sidebar/property.tt' label=l('Country:')
+               content=html_escape(label.country.name)
+                   IF label.country -%]
+        [% END %]
+        [%- INCLUDE "layout/sidebar/sidebar-rating.tt" entity=label -%]
+        [%- INCLUDE "layout/sidebar/sidebar-tags.tt" entity=label tags=top_tags
+            more=more_tags tag_this_text=l('Tag this label')
+            async = c.uri_for_action('/label/tag_async', [ label.gid ])
+            -%]
+
+        <ul class="links">
+        [% IF c.user_exists %]
+            [% IF subscribed %]
+                <li><a href="[% c.uri_for_action('/account/subscriptions/label/remove', { id => label.id }) %]">[% l('Unsubscribe') %]</a></li>
+            [% ELSE %]
+                <li><a href="[% c.uri_for_action('/account/subscriptions/label/add', { id => label.id }) %]">[% l('Subscribe') %]</a></li>
+            [% END %]
+            <li>[% link_entity(label, 'subscribers', l('Subscribers')) %]</li>
+        [% END %]
+            [% IF c.user_exists %]
+                <li>
+                  <a href="[% c.uri_for(c.controller.action_for('edit_annotation'), [ label.gid ]) %]">
+                    [% label.latest_annotation.text ? l('Edit annotation') : l('Add an annotation') %]
+                  </a>
+                </li>
+                <li>[% link_entity(label, 'delete', l('Remove this label')) %]</li>
+                <li>
+                  <a href="[% c.uri_for_action('/label/merge_queue', { 'add-to-merge' => label.id }) %]">
+                    [% l('Merge this label with another') %]
+                  </a>
+                </li>
+                <li>[% use_in_relationship(label) %]</li>
+                <li>[% relate_to_ellipsis(label) %]</li>
+                <li>[% relate_to_url(label) %]</li>
+                <li>[% link_entity(label, 'edits', l('View editing history')) %]</li>
+                [% IF label.edits_pending %]
+                  <li>[% link_entity(label, 'open_edits', l('Open edits')) %]</li>
+                [% END %]
+                <li>
+                  <a href="[% c.uri_for_action('/release_editor/add', { label = label.gid }) %]">
+                    [% l('Add a new release') %]
+                  </a>
+                </li>
+            [% ELSE %]
+                <li>[% request_login(l('Please log in to edit this label')) %]</li>
+            [% END %]
+        </ul>
+
+        [%- INCLUDE "layout/sidebar/sidebar-lastupdate.tt" entity=label -%]
+
+        [%- INCLUDE "layout/sidebar/sidebar-favicons.tt" source=label -%]
+    [% END %]
+
+    <div id="content">
+        [%- INCLUDE "label/header.tt" -%]
+        [%- content -%]
+    </div>
+
+[%- END -%]

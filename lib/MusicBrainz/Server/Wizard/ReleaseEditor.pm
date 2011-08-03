@@ -571,8 +571,8 @@ sub prepare_recordings
 
     my $json = JSON::Any->new( utf8 => 1 );
 
-    my @recording_edits = @{ $self->value->{rec_mediums} };
-    my @tracklist_edits = @{ $self->value->{mediums} };
+    my @recording_edits = @{ $self->get_value ('recordings', 'rec_mediums') // [] };
+    my @tracklist_edits = @{ $self->get_value ('tracklist', 'mediums') // [] };
 
     my $tracklists_by_id = $self->c->model('Tracklist')->get_by_ids(
         map { $_->{tracklist_id} } grep { defined $_->{tracklist_id} }
@@ -599,7 +599,7 @@ sub prepare_recordings
         $medium->{edits} = $self->edited_tracklist ($json->decode ($medium->{edits}))
             if $medium->{edits};
 
-        if (defined $medium->{edits} && defined $medium->{tracklist_id})
+        if ($medium->{edits} && defined $medium->{tracklist_id})
         {
             my $tracklist = $tracklists_by_id->{$medium->{tracklist_id}};
             $self->c->model ('Recording')->load ($tracklist->all_tracks);
@@ -630,7 +630,7 @@ sub prepare_recordings
                     'edit_sha1' => $_->{edit_sha1}
                 } } @$first_suggestions ];
         }
-        elsif (defined $medium->{edits})
+        elsif ($medium->{edits})
         {
             # A new tracklist has been entered, create new recordings
             # for all these tracks by default (no recording
@@ -756,7 +756,7 @@ sub prepare_edits
 
     $self->release(
         $self->create_edits(
-            data => clone($data),
+            data => $data,
             create_edit => $previewing
                 ? sub { $self->_preview_edit(@_) }
                 : sub { $self->_submit_edit(@_) },
@@ -771,6 +771,9 @@ sub prepare_edits
 
 sub _missing_labels {
     my ($self, $data) = @_;
+
+    $data->{labels} = $self->get_value ('information', 'labels');
+
     return grep { !$_->{label_id} && $_->{name} }
         @{ $data->{labels} };
 }
@@ -778,6 +781,8 @@ sub _missing_labels {
 sub _missing_artist_credits
 {
     my ($self, $data) = @_;
+
+    $data->{artist_credit} = $self->get_value ('information', 'artist_credit');
 
     return
         (
@@ -952,20 +957,29 @@ sub _edit_release_labels
         }
         elsif (
             $previewing ?
-                $new_label->{name} :
+                $new_label->{name} || $new_label->{catalog_number} :
                 $new_label->{label_id} || $new_label->{catalog_number})
         {
+            my $label;
+
             # Add ReleaseLabel
+            if ($previewing)
+            {
+                $label = $new_label->{name} ?
+                    Label->new(
+                        id   => 0,
+                        name => $new_label->{name}
+                    ) : undef;
+            }
+            else
+            {
+                $label = $labels->{ $new_label->{label_id} } if $new_label->{label_id};
+            }
 
             $create_edit->(
                 $EDIT_RELEASE_ADDRELEASELABEL, $editnote,
                 release => $previewing ? undef : $self->release,
-                label => $previewing
-                    ? Label->new(
-                        id   => 0,
-                        name => $new_label->{name}
-                    )
-                    : $labels->{ $new_label->{label_id} },
+                label => $label,
                 catalog_number => $new_label->{catalog_number},
                 as_auto_editor => $data->{as_auto_editor},
             );
@@ -1242,6 +1256,9 @@ sub _expand_mediums
 {
     my ($self, $data) = @_;
     my $json = JSON::Any->new( utf8 => 1 );
+
+    $data->{mediums} = $self->get_value ('tracklist', 'mediums') // [];
+    $data->{rec_mediums} = $self->get_value ('recordings', 'rec_mediums') // [];
 
     my $count = 0;
     for my $disc (@{ $data->{mediums} }) {
@@ -1538,6 +1555,8 @@ sub _seed_parameters {
 
     return collapse_hash($params);
 };
+
+
 
 =head1 LICENSE
 

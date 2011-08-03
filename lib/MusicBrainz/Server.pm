@@ -5,6 +5,8 @@ BEGIN { extends 'Catalyst' }
 
 use Class::MOP;
 use DBDefs;
+use Encode;
+use MusicBrainz::Server::Log qw( logger );
 
 use aliased 'MusicBrainz::Server::Translation';
 
@@ -77,6 +79,10 @@ __PACKAGE__->config(
             json => 'application/json; charset=UTF-8',
         },
         dirs => [ 'static' ],
+        no_logs => 1
+    },
+    stacktrace => {
+        enable => 1 # Always enable
     }
 );
 
@@ -183,6 +189,11 @@ if ($ENV{'MUSICBRAINZ_USE_TEST_DATABASE'})
     warn "WARNING: Using test database schema\n";
 }
 
+{
+    use MusicBrainz::Server::CatalystLogger;
+    __PACKAGE__->log( MusicBrainz::Server::CatalystLogger->new( dispatch => logger() ) );
+}
+
 # Start the application
 __PACKAGE__->setup(@args);
 
@@ -220,10 +231,28 @@ sub relative_uri
 }
 
 use POSIX qw(SIGALRM);
+use Proc::ProcessTable;
+
+my $pt;
+
+sub setup {
+	my $c = shift @_;
+	$pt = Proc::ProcessTable->new;
+	return $c->next::method(@_)
+}
 
 around 'dispatch' => sub {
     my $orig = shift;
     my $c = shift;
+
+    my ($process_info) = grep { $_->pid == $$ } @{ $pt->table };
+    printf STDERR "Process memory information: pid=%d virt=%d res=%d served=%d \"%s %s\"\n",
+        $$,
+        $process_info->size,
+        $process_info->rss,
+        $Catalyst::COUNT,
+        $c->req->method,
+        $c->req->uri;
 
     Translation->instance->build_languages_from_header($c->req->headers);
 
@@ -246,6 +275,22 @@ around 'dispatch' => sub {
         $c->$orig(@_);
     }
 };
+
+sub finalize_error {
+    my $c = shift;
+
+    $c->next::method(@_);
+
+    if (!$c->debug && scalar @{ $c->error }) {
+        $c->stash->{errors} = $c->error;
+        $c->stash->{template} = 'main/500.tt';
+        $c->stash->{stack_trace} = $c->_stacktrace;
+        $c->clear_errors;
+        $c->res->{body} = 'lololo';
+        $c->view('Default')->process($c);
+        $c->res->{body} = encode('utf-8', $c->res->{body});
+    }
+}
 
 sub gettext  { shift; Translation->instance->gettext(@_) }
 sub ngettext { shift; Translation->instance->ngettext(@_) }

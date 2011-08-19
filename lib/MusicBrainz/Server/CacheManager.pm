@@ -3,6 +3,8 @@ package MusicBrainz::Server::CacheManager;
 use Moose;
 use MusicBrainz::Server::CacheWrapper;
 use Class::MOP;
+use DBDefs;
+
 
 has '_key_to_profile' => (
     is => 'ro',
@@ -35,7 +37,7 @@ sub BUILD
         my $keys = $profile->{keys};
         if (defined $keys) {
             foreach my $key (@$keys) {
-                $self->_key_to_profile->{$key} = $name;
+                $self->_key_to_profile->{&DBDefs::CACHE_NAMESPACE . $key} = $name;
             }
         }
         Class::MOP::load_class($profile->{class});

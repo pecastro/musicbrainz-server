@@ -1,6 +1,7 @@
 package MusicBrainz::Server::Data::Role::EntityCache;
 
 use MooseX::Role::Parameterized;
+use DBDefs;
 
 parameter 'prefix' => (
     isa => 'Str',
@@ -13,7 +14,7 @@ role {
 
     with 'MusicBrainz::Server::Data::Role::EntityCacheBase';
 
-    method '_id_cache_prefix' => sub { $params->{prefix} };
+    method '_id_cache_prefix' => sub { &DBDefs::CACHE_NAMESPACE . $params->{prefix} };
 
     method '_add_to_cache' => sub
     {

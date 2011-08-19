@@ -197,6 +197,8 @@ our %CACHE_MANAGER_OPTIONS = (
 #);
 
 sub CACHE_MANAGER_OPTIONS { \%CACHE_MANAGER_OPTIONS }
+# Allow Memcached to work in shared environment
+sub CACHE_NAMESPACE { "musicbrainz_" }
 
 ################################################################################
 # Rate-Limiting

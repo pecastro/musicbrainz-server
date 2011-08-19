@@ -14,6 +14,7 @@ use MusicBrainz::Server::Data::Search;
 use MusicBrainz::Server::Test;
 use MusicBrainz::Server::Constants qw($DARTIST_ID $VARTIST_ID);
 use Sql;
+use DBDefs;
 
 with 't::Edit';
 with 't::Context';
@@ -325,14 +326,14 @@ test 'Merging with a cache' => sub {
     my $artist2 = $c->model('Artist')->get_by_gid('945c079d-374e-4436-9448-da92dedef3cf');
 
     for my $artist ($artist1, $artist2) {
-        ok($cache->exists('artist:' . $artist->gid), 'caches artist via GID');
-        ok($cache->exists('artist:' . $artist->id), 'caches artist via ID');
+        ok($cache->exists(&DBDefs::CACHE_NAMESPACE . 'artist:' . $artist->gid), 'caches artist via GID');
+        ok($cache->exists(&DBDefs::CACHE_NAMESPACE . 'artist:' . $artist->id), 'caches artist via ID');
     }
 
     $c->model('Artist')->merge($artist1->id, [ $artist2->id ]);
 
-    ok(!$cache->exists('artist:' . $artist2->gid), 'artist 2 no longer in cache (by gid)');
-    ok(!$cache->exists('artist:' . $artist2->id), 'artist 2 no longer in cache (by id)');
+    ok(!$cache->exists(&DBDefs::CACHE_NAMESPACE . 'artist:' . $artist2->gid), 'artist 2 no longer in cache (by gid)');
+    ok(!$cache->exists(&DBDefs::CACHE_NAMESPACE . 'artist:' . $artist2->id), 'artist 2 no longer in cache (by id)');
 
     $c->sql->commit;
 };

@@ -6,6 +6,7 @@ use Test::Memory::Cycle;
 
 use MusicBrainz::Server::CacheManager;
 use MusicBrainz::Server::Context;
+use DBDefs;
 
 with 't::Context' => { -excludes => '_build_context' };
 
@@ -82,8 +83,8 @@ is ( $entity_data->get_by_gid_called, 1 );
 is ( $entity_data->get_by_id_called, 0 );
 is ( $test->c->cache->_orig->get_called, 1 );
 is ( $test->c->cache->_orig->set_called, 2 );
-ok ( $test->c->cache->_orig->data->{'prefix:1'} =~ '1' );
-ok ( $test->c->cache->_orig->data->{'prefix:abc'} =~ '1' );
+ok ( $test->c->cache->_orig->data->{&DBDefs::CACHE_NAMESPACE . 'prefix:1'} =~ '1' );
+ok ( $test->c->cache->_orig->data->{&DBDefs::CACHE_NAMESPACE . 'prefix:abc'} =~ '1' );
 
 memory_cycle_ok($entity);
 memory_cycle_ok($entity_data);
@@ -108,7 +109,7 @@ $entity_data->get_by_id_called(0);
 $test->c->cache->_orig->get_called(0);
 $test->c->cache->_orig->set_called(0);
 
-delete $test->c->cache->_orig->data->{'prefix:1'};
+delete $test->c->cache->_orig->data->{&DBDefs::CACHE_NAMESPACE . 'prefix:1'};
 
 $entity = $entity_data->get_by_gid('abc');
 is ( $entity->id, 1 );

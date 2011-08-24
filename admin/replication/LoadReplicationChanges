@@ -45,12 +45,14 @@ my $fKeepFiles = 0;
 my $baseuri = "http://data.musicbrainz.org/pub/musicbrainz/data/replication";
 my $lockfile = my $deflockfile = "/tmp/.mb-LoadReplicationChanges";
 my @process_opts;
+my $fVerifySig = 0;
 
 GetOptions(
-    "help"                              => \$fHelp,
+    "help"                      => \$fHelp,
     "lockfile=s"                => \$lockfile,
     "base-uri=s"                => \$baseuri,
     "process-arg=s"             => \@process_opts,
+    "verify-sig"                => \$fVerifySig,
 ) or exit 2;
 
 $baseuri =~ s/\/$//;
@@ -69,6 +71,10 @@ Usage: LoadReplicationChanges [options]
                       If required, ARG can be an option (e.g.
                       --process-arg=--debug-xact).  Add --process-arg=ARG
                       again to specify additional arguments.
+    --verify-sig      If this option is present the replication packets will be verified
+                      against their signature.
+}
+
 
 EOF
 }
@@ -146,33 +152,13 @@ my $file = "replication-$iNextReplicationSequence.tar.bz2";
 my $url = "$baseuri/$file";
 my $localfile = "$tmpdir/$file";
 
-use LWP::UserAgent;
-my $ua = LWP::UserAgent->new(
-    agent => '$Id$',
-);
-$ua->env_proxy;
+# Get the replication packet
+retrieve_remote_file($file,$url,$localfile);
 
-print localtime() . " : Downloading $url to $localfile\n";
-my $resp = $ua->mirror($url, $localfile);
-
-# We only understand a limited set of responses:
-# OK, not found, and the rest.
-use HTTP::Status qw( RC_OK RC_NOT_FOUND RC_NOT_MODIFIED );
-
-if ($resp->code == RC_NOT_FOUND)
-{
-    # TODO check for newer replication packets, in case the server has lost one?
-    # die if so
-
-    # Otherwise exit ok
-    print localtime() . " : Replication packet #$iNextReplicationSequence not available\n";
-    exit 0;
-}
-
-unless ($resp->code == RC_OK or $resp->code == RC_NOT_MODIFIED)
-{
-    print $resp->as_string;
-    die;
+# Get the signature file
+if ($fVerifySig) {
+    retrieve_remote_file($file . ".asc",$url . ".asc",$localfile . ".asc");
+    validate_file_signature($localfile);
 }
 
 # We successfully retrieved the replication packet.
@@ -294,11 +280,70 @@ $dtReplicationDate = $TIMESTAMP;
 # Loop back round and start again
 goto NEXT_PACKET;
 
+
+sub retrieve_remote_file {
+    my ($file,$url,$localfile) = @_;
+
+    use LWP::UserAgent;
+    # PEC TODO perhaps they might want to fix this '$Id$' thingie ?
+    my $ua = LWP::UserAgent->new(
+        agent => '$Id$',
+    );
+    $ua->env_proxy;
+
+    print localtime() . " : Downloading $url to $localfile\n";
+    my $resp = $ua->mirror($url, $localfile);
+
+    # We only understand a limited set of responses:
+    # OK, not found, and the rest.
+    use HTTP::Status qw( RC_OK RC_NOT_FOUND RC_NOT_MODIFIED );
+
+    if ($resp->code == RC_NOT_FOUND) {
+        # TODO check for newer replication packets, in case the server has lost one?
+        # die if so
+
+        # Otherwise exit ok
+        print localtime() . " : Replication packet #$iNextReplicationSequence not available\n";
+        exit 0;
+    }
+
+    unless ($resp->code == RC_OK or $resp->code == RC_NOT_MODIFIED)
+        {
+            print $resp->as_string;
+            die;
+        }
+}
+
+
+sub validate_file_signature {
+    my $file = shift;
+
+    use GnuPG qw( :algo );
+
+    my $gpg = GnuPG->new;
+
+    my $signature = $file . ".asc";
+    use DBDefs;
+    my $pub_key = "gpg/pubkey.txt";
+
+    -e $file or die "Can't find file $file: $!";
+
+    $gpg->import_keys( keys => [ &DBDefs::MB_PUB_KEY ] );
+
+    my $sig;
+    eval {
+        $sig = $gpg->verify( signature => $signature, file => $file );
+    };
+    if ($@) {
+        die "Signature for file $file is not valid..."
+    }
+}
+
 sub read_file
 {
     my $file = shift;
-    open(my $fh, "<$mydir/$file")
-        or return undef;
+    open(my $fh, "<","$mydir/$file")
+        or return;
     local $/;
     <$fh>;
 }

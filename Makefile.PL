@@ -45,6 +45,7 @@ requires 'Email::MIME::Creator';
 requires 'Email::Valid';
 requires 'Exception::Class'                           => '1.29';
 requires 'Function::Parameters';
+requires 'GnuPG'                                      => '0.17';
 requires 'HTML::FormHandler'                          => '0.30002';
 requires 'HTML::Tiny'                                 => '1.05';
 requires 'HTML::TreeBuilder::XPath';

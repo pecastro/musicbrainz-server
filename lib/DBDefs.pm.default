@@ -86,6 +86,9 @@ sub REPLICATION_TYPE { RT_STANDALONE }
 # Either an array ref of command line options, or undef to skip gpg-signing.
 sub GPG_SIGNING_OPTIONS { undef }
 
+# Public key location
+sub MB_PUB_KEY { "mb_super_evilz_pubkey.txt" }
+
 ################################################################################
 # HTTP Server Names
 ################################################################################

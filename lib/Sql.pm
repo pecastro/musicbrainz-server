@@ -70,6 +70,7 @@ sub is_in_transaction
 sub select
 {
     my ($self, $query, @params) = @_;
+    $DB::single=1;
     my $prepare_method = (@params ? "prepare_cached" : "prepare");
 
     return try {
@@ -99,6 +100,7 @@ sub do
     $self->_auto_commit(0) if $self->_auto_commit;
     return try {
         my $tt = Sql::Timer->new($query, \@params) if $self->debug;
+        $DB::single=1;
         my $sth = $self->dbh->$prepare_method($query);
         my $rows = $sth->execute(@params);
         $sth->finish;

@@ -56,6 +56,8 @@ sub _build_conn
         }
     });
 
+    $DB::single=1;
+    $conn->mode('fixup');
     return $conn;
 }
 

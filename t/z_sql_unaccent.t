@@ -7,10 +7,15 @@ use encoding 'utf8';
 use MusicBrainz::Server::Test;
 use Sql;
 
+use Data::Dumper;
 my $c = MusicBrainz::Server::Test->create_test_context();
 
 $DB::single=1;
-my $sql = Sql->new($c->conn);
+
+print Dumper $c;
+print Dumper $c->conn;
+
+my $sql = Sql->new($c->dbh);
 
 my $val = $sql->select_single_value("SELECT musicbrainz_unaccent('foo');");
 is ($val, "foo");

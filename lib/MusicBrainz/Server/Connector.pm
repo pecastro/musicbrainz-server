@@ -53,21 +53,16 @@ sub _build_conn
     $conn->mode('fixup');
     #warn "PEC TODO setting up ping";
 
-    # $conn->run(sub {
-    #     my $sql = Sql->new($_);
-    #     $sql->auto_commit(1);
-    #     $sql->do("SET TIME ZONE 'UTC'");
-    #     $sql->auto_commit(1);
-    #     $sql->do("SET CLIENT_ENCODING = 'UNICODE'");
+    $conn->run(sub {
+                   my $dbh = $_;
+                   $dbh->do("SET TIME ZONE 'UTC'");
+                   $dbh->do("SET CLIENT_ENCODING = 'UNICODE'");
 
-    #     if (my $schema = $self->_schema) {
-    #         $sql->auto_commit(1);
-    #         $sql->do("SET search_path TO '$schema'");
-    #     }
-    # });
+                   if (my $schema = $self->_schema) {
+                       $dbh->do("SET search_path TO '$schema'");
+                   }
+    });
 
-    $DB::single=1;
-    warn "Something ...";
     return $conn;
 }
 
